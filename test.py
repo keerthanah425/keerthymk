@@ -1,5 +1,4 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
+from fastapi import FastAPI, Header, HTTPException, Depends
 
 app = FastAPI(
     title="FastAPI KT",
@@ -7,29 +6,22 @@ app = FastAPI(
     version="1.0.0"
 )
 
-stored_user = None
+def verify_token(token: str = Header(None)):
+    # Token verification logic
+    if token != "3242423":
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid token"
+        )
+
+    return {
+        "user": "authorised_user"
+    }
 
 
-class User(BaseModel):
-    name: str
-    age: int
-    password: str
-
-
-class UserResponse(BaseModel):
-    name: str
-    age: int
-
-
-@app.post("/user")
-def create_user(data: User):
-    global stored_user
-    stored_user = data
-    return {"message": "User created successfully"}
-
-
-@app.get("/user/{name}", response_model=UserResponse)
-def get_user(name: str):
-    if stored_user and stored_user.name == name:
-        return stored_user
-    return {"message": "User not found"}
+@app.get("/secure-data")
+def get_secure_data(user=Depends(verify_token)):
+    return {
+        "message": "This is secure data",
+        "user": user
+    }
