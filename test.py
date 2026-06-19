@@ -7,44 +7,29 @@ app = FastAPI(
     version="1.0.0"
 )
 
-task_list = []
+stored_user = None
 
-class Task(BaseModel):
-    id: int
+
+class User(BaseModel):
     name: str
-    completed: bool = False
+    age: int
+    password: str
 
 
-@app.post("/tasks")
-def create_task(task: Task):
-    task_list.append(task)
-    return {
-        "message": "Task added successfully",
-        "task": task
-    }
-@app.get("/tasks")
-def get_tasks():
-    return task_list
+class UserResponse(BaseModel):
+    name: str
+    age: int
 
-@app.get("/tasks/{task_id}")
-def get_task(task_id: int):
-    for task in task_list:
-        if task.id == task_id:
-            return task
-    return {"message": "Task not found"}
 
-@app.put("/tasks/{task_id}")
-def update_task(task_id: int, updated_task: Task):
-    for index, task in enumerate(task_list):
-        if task.id == task_id:
-            task_list[index] = updated_task
-            return {"message": "Task updated"}
-    return {"message": "Task not found"}
+@app.post("/user")
+def create_user(data: User):
+    global stored_user
+    stored_user = data
+    return {"message": "User created successfully"}
 
-@app.delete("/tasks/{task_id}")
-def delete_task(task_id: int):
-    for task in task_list:
-        if task.id == task_id:
-            task_list.remove(task)
-            return {"message": "Task deleted"}
-    return {"message": "Task not found"}
+
+@app.get("/user/{name}", response_model=UserResponse)
+def get_user(name: str):
+    if stored_user and stored_user.name == name:
+        return stored_user
+    return {"message": "User not found"}
